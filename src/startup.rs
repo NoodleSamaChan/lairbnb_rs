@@ -1,7 +1,7 @@
 use std::net::TcpListener;
 use actix_web::{dev::Server, web, App, HttpResponse, HttpServer};
 use sqlx::PgPool;
-use crate::routes::{insert_lair, register};
+use crate::routes::{insert_lair, register, research_lair};
 
 async fn health_check() -> HttpResponse {
     HttpResponse::Ok().finish()
