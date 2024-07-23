@@ -1,9 +1,12 @@
 use std::net::TcpListener;
-
-use lairbnb_rs::run;
+use lairbnb_rs::{configuration::get_configuration, startup::run};
+use sqlx::{Connection, PgConnection, PgPool};
 
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {
-    let listener = TcpListener::bind("127.0.0.1:0").expect("failed to bind to random port");
-    run(listener)?.await
+    let configuration = get_configuration().expect("Failed to read configuration.");
+    let connection_pool = PgPool::connect(&configuration.database.connection_string()).await.expect("failed to connect to postgres");
+    let address = format!("127.0.0.1:{}", configuration.application_port);
+    let listener = TcpListener::bind(address)?;
+    run(listener, connection_pool)?.await
 }
