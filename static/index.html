@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" type="text/css" href="/static/style.css"/>
+        <script src="/static/main.js" defer></script>
+        <title>LairBnB</title>
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+            integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+            crossorigin=""/>
+         <!-- Make sure you put this AFTER Leaflet's CSS -->
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin=""></script>
+            
+        <link rel="icon" type="image/x-icon" href="/static/favicon.png">
+    </head>
+    <body>
+        <div id="announcements">
+            <div class="announce">
+                <img src="https://avatars.githubusercontent.com/u/7032172?v=4"/> 
+                <span>Le vigan</span>
+            </div>
+            <div class="announce">
+                <img src="https://avatars.githubusercontent.com/u/3692335?v=4"/> 
+                <span>Lyon</span>
+            </div>
+        </div>
+        <div id="right">
+            <nav id="navbar">
+                <input id="searchbar" type="search" placeholder="Le vigan"/>
+                <input id="login" type="button" value="Log In"/>
+                <input id="register" type="button" value="Register your account" onclick="location.href = '/static/register.html';"/>
+            </nav>
+            <div id="map"></div>
+        </div>
+    </body>
+</html>
