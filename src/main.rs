@@ -1,6 +1,8 @@
-use lairbnb_rs::{configuration::get_configuration, startup::run, telemetry::{get_subscriber, init_subscriber}};
 use sqlx::postgres::PgPoolOptions;
 use std::net::TcpListener;
+use lairbnb_rs::configuration::get_configuration;
+use lairbnb_rs::startup::run;
+use lairbnb_rs::telemetry::{get_subscriber, init_subscriber};
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
