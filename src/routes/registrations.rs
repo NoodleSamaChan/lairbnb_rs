@@ -2,8 +2,8 @@ use actix_web::{web, HttpResponse, ResponseError};
 use anyhow::Context;
 use reqwest::StatusCode;
 use serde::Deserialize;
-use uuid::Uuid;
 use sqlx::{Executor, PgPool, Postgres, Transaction};
+use uuid::Uuid;
 
 use crate::domain::{NewSubscriber, SubscriberEmail, SubscriberName, SubscriberPassword};
 
@@ -20,7 +20,11 @@ impl TryFrom<FormData> for NewSubscriber {
         let name = SubscriberName::parse(value.name)?;
         let email = SubscriberEmail::parse(value.email)?;
         let password = SubscriberPassword::parse(value.password)?;
-        Ok(Self { email, name, password })
+        Ok(Self {
+            email,
+            name,
+            password,
+        })
     }
 }
 
@@ -70,7 +74,10 @@ pub fn error_chain_fmt(
         subscriber_password = %form.password,
     )
 )]
-pub async fn register(form: web::Form<FormData>, pool: web::Data<PgPool>) -> Result<HttpResponse, SubscribeError>  {
+pub async fn register(
+    form: web::Form<FormData>,
+    pool: web::Data<PgPool>,
+) -> Result<HttpResponse, SubscribeError> {
     let new_subscriber = form.0.try_into().map_err(SubscribeError::ValidationError)?;
     let mut transaction = pool
         .begin()
@@ -90,7 +97,10 @@ pub async fn register(form: web::Form<FormData>, pool: web::Data<PgPool>) -> Res
     name = "Saving new subscriber details in the database",
     skip(new_subscriber, transaction)
 )]
-pub async fn insert_user(new_subscriber: &NewSubscriber, transaction: &mut Transaction<'_, Postgres>) -> Result<Uuid, sqlx::Error> {
+pub async fn insert_user(
+    new_subscriber: &NewSubscriber,
+    transaction: &mut Transaction<'_, Postgres>,
+) -> Result<Uuid, sqlx::Error> {
     let subscriber_id = Uuid::new_v4();
     let query = sqlx::query!(
         r#"
