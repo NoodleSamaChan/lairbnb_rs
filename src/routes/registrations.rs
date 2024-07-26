@@ -1,7 +1,7 @@
 use actix_web::{web, HttpResponse};
 use serde::Deserialize;
-use sqlx::PgPool;
 use uuid::Uuid;
+use sqlx::{Executor, PgPool, Postgres, Transaction};
 
 use crate::domain::{NewSubscriber, SubscriberEmail, SubscriberName, SubscriberPassword};
 
@@ -37,32 +37,39 @@ pub async fn register(form: web::Form<FormData>, pool: web::Data<PgPool>) -> Htt
         Ok(form) => form,
         Err(_) => return HttpResponse::BadRequest().finish(),
     };
-    match insert_user(&new_subscriber, &pool).await {
+    let mut transaction = match pool.begin().await {
+        Ok(transaction) => transaction,
+        Err(_) => return HttpResponse::InternalServerError().finish(),
+    };
+    let subscriber_id = match insert_user(&new_subscriber, &mut transaction).await {
         Ok(_) => HttpResponse::Ok().finish(),
         Err(_) => HttpResponse::InternalServerError().finish(),
+    };
+    if transaction.commit().await.is_err() {
+        return HttpResponse::InternalServerError().finish();
     }
+    HttpResponse::Ok().finish()
 }
 
 #[tracing::instrument(
     name = "Saving new subscriber details in the database",
-    skip(new_subscriber, pool)
+    skip(new_subscriber, transaction)
 )]
-pub async fn insert_user(new_subscriber: &NewSubscriber, pool: &PgPool) -> Result<(), sqlx::Error> {
-    sqlx::query!(
+pub async fn insert_user(new_subscriber: &NewSubscriber, transaction: &mut Transaction<'_, Postgres>) -> Result<Uuid, sqlx::Error> {
+    let subscriber_id = Uuid::new_v4();
+    let query = sqlx::query!(
         r#"
     INSERT INTO users (id, account_name, account_password, account_email)
     VALUES ($1, $2, $3, $4)
             "#,
-        Uuid::new_v4(),
+        subscriber_id,
         new_subscriber.name.as_ref(),
         new_subscriber.password.as_ref(),
         new_subscriber.email.as_ref(),
-    )
-    .execute(pool)
-    .await
-    .map_err(|e| {
+    );
+    transaction.execute(query).await.map_err(|e| {
         tracing::error!("Failed to execute query: {:?}", e);
         e
     })?;
-    Ok(())
+    Ok(subscriber_id)
 }
