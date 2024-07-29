@@ -1,4 +1,13 @@
-use actix_web::{http::header::{HeaderMap, HeaderValue}, web, HttpRequest, HttpResponse, ResponseError};
+use super::error_chain_fmt;
+use crate::{
+    domain::{LairDescription, LairImage, LairLat, LairLon, LairTitle, NewLair},
+    telemetry::spawn_blocking_with_tracing,
+};
+use actix_web::http::StatusCode;
+use actix_web::{
+    http::header::{HeaderMap, HeaderValue},
+    web, HttpRequest, HttpResponse, ResponseError,
+};
 use anyhow::Context;
 use argon2::{Argon2, PasswordHash, PasswordVerifier};
 use base64::Engine;
@@ -6,9 +15,6 @@ use secrecy::{ExposeSecret, Secret};
 use serde::Deserialize;
 use sqlx::{Executor, PgPool, Postgres, Transaction};
 use uuid::Uuid;
-use crate::{domain::{LairDescription, LairImage, LairLat, LairLon, LairTitle, NewLair}, telemetry::spawn_blocking_with_tracing};
-use super::error_chain_fmt;
-use actix_web::http::StatusCode;
 
 #[derive(Deserialize)]
 pub struct LairInfo {
@@ -16,9 +22,9 @@ pub struct LairInfo {
     description: String,
     image: String,
     lon: f64,
-    lat: f64
+    lat: f64,
 }
-impl TryFrom<LairInfo> for NewLair  {
+impl TryFrom<LairInfo> for NewLair {
     type Error = String;
 
     fn try_from(value: LairInfo) -> Result<Self, Self::Error> {
@@ -63,7 +69,7 @@ impl ResponseError for LairInsertionError {
 #[tracing::instrument(
     name = "Saving new subscriber details in the database",
     skip(pool, request, lair_info)
-)] 
+)]
 pub async fn insert_lair(
     pool: web::Data<PgPool>,
     request: HttpRequest,
@@ -80,7 +86,9 @@ pub async fn insert_lair(
         .context("Failed to acquire a Postgres connection from the pool")?;
 
     let room_id = Uuid::new_v4();
-    insert_lair_into_db(lair_info, &mut transaction, user_id, room_id).await.expect("Couldn't push lair info into DB");
+    insert_lair_into_db(lair_info, &mut transaction, user_id, room_id)
+        .await
+        .expect("Couldn't push lair info into DB");
     Ok(HttpResponse::Ok().finish())
 }
 
@@ -113,7 +121,6 @@ pub async fn insert_lair_into_db(
     })?;
     Ok(HttpResponse::Ok().finish())
 }
-
 
 #[derive(thiserror::Error)]
 pub enum PublishError {

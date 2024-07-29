@@ -1,9 +1,9 @@
 use crate::helpers::spawn_app;
 use anyhow::Context;
+use sqlx::Executor;
 use uuid::Uuid;
 use wiremock::matchers::{method, path};
 use wiremock::{Mock, ResponseTemplate};
-use sqlx::{Executor, PgPool, Postgres, Transaction};
 
 #[tokio::test]
 async fn subscribe_returns_a_200_for_valid_form_data() {
@@ -34,7 +34,8 @@ async fn subscribe_persists_the_new_subscriber() {
     let user_id = Uuid::new_v4();
 
     // Act
-    let mut transaction = app.db_pool
+    let mut transaction = app
+        .db_pool
         .begin()
         .await
         .expect("Failed to acquire a Postgres connection from the pool");
@@ -49,21 +50,27 @@ async fn subscribe_persists_the_new_subscriber() {
         password,
         email,
     );
-    transaction.execute(include).await.map_err(|e| {
-        tracing::error!("Failed to execute query: {:?}", e);
-        e
-    }).expect("failed to include in db.");
+    transaction
+        .execute(include)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to execute query: {:?}", e);
+            e
+        })
+        .expect("failed to include in db.");
     let _ = transaction
         .commit()
         .await
         .context("Failed to commit SQL transaction to store a new subscriber.");
 
-
     // Assert
-    let saved = sqlx::query!("SELECT account_email, account_name, account_password FROM users WHERE id=$1", user_id)
-        .fetch_one(&app.db_pool)
-        .await
-        .expect("Failed to fetch saved subscription.");
+    let saved = sqlx::query!(
+        "SELECT account_email, account_name, account_password FROM users WHERE id=$1",
+        user_id
+    )
+    .fetch_one(&app.db_pool)
+    .await
+    .expect("Failed to fetch saved subscription.");
 
     assert_eq!(saved.account_email, "ursula_le_guin@gmail.com");
     assert_eq!(saved.account_name, "le guin");

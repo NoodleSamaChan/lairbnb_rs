@@ -1,9 +1,7 @@
-use anyhow::Context;
-use uuid::Uuid;
-use wiremock::{matchers::{method, path}, Mock, ResponseTemplate};
-use sqlx::{Executor, PgPool, Postgres, Transaction};
-
 use crate::helpers::{spawn_app, TestApp};
+use anyhow::Context;
+use sqlx::Executor;
+use uuid::Uuid;
 
 async fn create_subscriber(app: &TestApp) {
     // Arrange
@@ -23,8 +21,6 @@ async fn create_subscriber(app: &TestApp) {
     assert_eq!(saved.account_name, "le guin");
     assert_eq!(saved.account_password, "password{");
 }
-
-
 
 #[tokio::test]
 async fn requests_missing_authorization_are_rejected() {
@@ -80,7 +76,6 @@ async fn content_registered_in_db() {
 
 #[tokio::test]
 async fn subscribe_persists_the_new_lair() {
-    
     // Arrange
     let app = spawn_app().await;
     let title = "Newsletter title";
@@ -91,7 +86,8 @@ async fn subscribe_persists_the_new_lair() {
 
     let room_id = Uuid::new_v4();
 
-    let mut transaction = app.db_pool
+    let mut transaction = app
+        .db_pool
         .begin()
         .await
         .expect("Failed to acquire a Postgres connection from the pool");
@@ -110,24 +106,31 @@ async fn subscribe_persists_the_new_lair() {
         lat,
         room_id,
     );
-    transaction.execute(include).await.map_err(|e| {
-        tracing::error!("Failed to execute query: {:?}", e);
-        e
-    }).expect("failed to include in db.");
+    transaction
+        .execute(include)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to execute query: {:?}", e);
+            e
+        })
+        .expect("failed to include in db.");
     let _ = transaction
         .commit()
         .await
         .context("Failed to commit SQL transaction to store a new subscriber.");
 
     // Assert
-    let saved = sqlx::query!("SELECT title, description, image, lon, lat FROM rooms WHERE id=$1", app.test_user.user_id)
-        .fetch_one(&app.db_pool)
-        .await
-        .expect("Failed to fetch saved subscription.");
+    let saved = sqlx::query!(
+        "SELECT title, description, image, lon, lat FROM rooms WHERE id=$1",
+        app.test_user.user_id
+    )
+    .fetch_one(&app.db_pool)
+    .await
+    .expect("Failed to fetch saved subscription.");
 
     assert_eq!(&saved.title, "Newsletter title");
     assert_eq!(saved.description, "Newsletter title");
     assert_eq!(saved.image, "Newsletter title");
     assert_eq!(saved.lon, 1.5);
-    assert_eq!(saved.lat, 1.5); 
+    assert_eq!(saved.lat, 1.5);
 }

@@ -1,4 +1,4 @@
-use argon2::password_hash::{SaltString, Value};
+use argon2::password_hash::SaltString;
 use argon2::{Algorithm, Argon2, Params, PasswordHasher, Version};
 use lairbnb_rs::configuration::{get_configuration, DatabaseSettings};
 use lairbnb_rs::startup::{get_connection_pool, Application};
@@ -90,8 +90,6 @@ pub async fn spawn_app() -> TestApp {
 
     test_app
 }
-
-
 
 async fn configure_database(config: &DatabaseSettings) -> PgPool {
     // Create database
