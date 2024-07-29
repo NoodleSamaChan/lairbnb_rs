@@ -43,13 +43,13 @@ mod tests {
 
     #[test]
     fn a_256_grapheme_long_title_is_valid() {
-        let title = "a̐".repeat(256);
+        let title = "a̐".repeat(1000);
         assert_ok!(LairTitle::parse(title));
     }
 
     #[test]
     fn a_title_longer_than_256_graphemes_is_rejected() {
-        let title = "a".repeat(257);
+        let title = "a".repeat(1001);
         assert_err!(LairTitle::parse(title));
     }
 

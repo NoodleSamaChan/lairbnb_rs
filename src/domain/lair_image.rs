@@ -49,7 +49,7 @@ mod tests {
 
     #[test]
     fn an_image_longer_than_100000_graphemes_is_rejected() {
-        let image = "a".repeat(257);
+        let image = "a".repeat(100001);
         assert_err!(LairImage::parse(image));
     }
 

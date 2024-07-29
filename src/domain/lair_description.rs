@@ -49,7 +49,7 @@ mod tests {
 
     #[test]
     fn an_description_longer_than_100000_graphemes_is_rejected() {
-        let description = "a".repeat(257);
+        let description = "a".repeat(100001);
         assert_err!(LairDescription::parse(description));
     }
 
