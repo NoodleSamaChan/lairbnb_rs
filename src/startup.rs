@@ -1,7 +1,7 @@
 use crate::{
     configuration::{DatabaseSettings, Settings},
     email_client::EmailClient,
-    routes::{health_check, register},
+    routes::{health_check, insert_lair, register},
 };
 use actix_web::{
     dev::Server,
@@ -68,6 +68,7 @@ pub fn run(
             .wrap(TracingLogger::default())
             .route("/health_check", web::get().to(health_check))
             .route("/registration", web::post().to(register))
+            .route("/new_lair", web::post().to(insert_lair))
             .app_data(db_pool.clone())
             .app_data(email_client.clone())
     })
