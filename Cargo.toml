@@ -27,12 +27,19 @@ secrecy = { version = "0.8", features = ["serde"] }
 serde-aux = "4"
 unicode-segmentation = "1.7.1"
 validator = "0.16"
-reqwest = { version = "0.11", default-features = false, features = ["json", "rustls-tls"] }
+reqwest = { version = "0.11", default-features = false, features = ["json", "rustls-tls", "cookies"] }
 thiserror = "1.0.24"
 anyhow = "1.0.40"
 base64 = "0.21.0"
 argon2 = { version = "0.4", features = ["std"] }
 rand = { version = "0.8", features=["std_rng"] }
+urlencoding = "2"
+htmlescape = "0.3"
+hmac = { version = "0.12", features = ["std"] }
+sha2 = "0.10"
+hex = "0.4"
+actix-web-flash-messages = { version = "0.4", features = ["cookies"] }
+actix-session = { version = "0.7", features = ["redis-rs-tls-session"] }
 
 [dev-dependencies]
 reqwest = { version = "0.11", features = ["json"] }
