@@ -1,7 +1,9 @@
 use crate::{
     configuration::{DatabaseSettings, Settings},
     email_client::EmailClient,
-    routes::{health_check, insert_lair, register},
+};
+use crate::routes::{
+    health_check, home, login, login_form, register, insert_lair,
 };
 use actix_web::{
     dev::Server,
@@ -69,6 +71,9 @@ pub fn run(
             .route("/health_check", web::get().to(health_check))
             .route("/registration", web::post().to(register))
             .route("/new_lair", web::post().to(insert_lair))
+            .route("/", web::get().to(home))
+            .route("/login", web::get().to(login_form))
+            .route("/login", web::post().to(login))
             .app_data(db_pool.clone())
             .app_data(email_client.clone())
     })
