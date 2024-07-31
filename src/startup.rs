@@ -22,6 +22,7 @@ use secrecy::{ExposeSecret, Secret};
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use std::net::TcpListener;
 use tracing_actix_web::TracingLogger;
+use actix_files as fs;
 
 pub struct Application {
     port: u16,
@@ -100,9 +101,10 @@ async fn run(
                 secret_key.clone(),
             ))
             .wrap(TracingLogger::default())
+            .service(fs::Files::new("/static", "static").show_files_listing())
             .route("/health_check", web::get().to(health_check))
             .route("/registration", web::get().to(sign_up_form))
-            .route("/registration", web::post().to(register))
+            .route("/user", web::post().to(register))
             .route("/", web::get().to(home))
             .route("/login", web::get().to(login_form))
             .route("/login", web::post().to(login))

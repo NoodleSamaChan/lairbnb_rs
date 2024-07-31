@@ -9,20 +9,18 @@ use sqlx::{Executor, PgPool, Postgres, Transaction};
 use uuid::Uuid;
 
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct FormData {
-    name: String,
-    email: String,
+    full_name: String,
     password: String,
 }
 impl TryFrom<FormData> for NewSubscriber {
     type Error = String;
 
     fn try_from(value: FormData) -> Result<Self, Self::Error> {
-        let name = SubscriberName::parse(value.name)?;
-        let email = SubscriberEmail::parse(value.email)?;
+        let name = SubscriberName::parse(value.full_name)?;
         let password = SubscriberPassword::parse(value.password)?;
         Ok(Self {
-            email,
             name,
             password,
         })
@@ -70,19 +68,17 @@ impl ResponseError for SubscribeError {
     name = "Adding a new subscriber",
     skip(form, pool),
     fields(
-        subscriber_email = %form.email,
-        subscriber_name = %form.name,
+        subscriber_name = %form.full_name,
         subscriber_password = %form.password,
     )
 )]
 pub async fn register(
-    form: web::Form<FormData>,
+    form: web::Json<FormData>,
     pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, SubscribeError> {
     println!("TRYING TO CREATE NEW USER");
     let new_subscriber = NewSubscriber {
-        email: SubscriberEmail::parse(form.0.email).expect("Email check failed"),
-        name: SubscriberName::parse(form.0.name).expect("Name check failed"),
+        name: SubscriberName::parse(form.0.full_name).expect("Name check failed"),
         password: SubscriberPassword::parse(form.0.password).expect("Password check failed"),
     };
     let mut transaction = pool
@@ -109,6 +105,7 @@ pub async fn insert_user(
     transaction: &mut Transaction<'_, Postgres>,
 ) -> Result<Uuid, sqlx::Error> {
     let subscriber_id = Uuid::new_v4();
+    let email = String::from("test@gmail.com");
     let query = sqlx::query!(
         r#"
     INSERT INTO users (id, account_name, account_password, account_email)
@@ -117,7 +114,7 @@ pub async fn insert_user(
         subscriber_id,
         new_subscriber.name.as_ref(),
         new_subscriber.password.as_ref(),
-        new_subscriber.email.as_ref(),
+        email,
     );
     transaction.execute(query).await.map_err(|e| {
         tracing::error!("Failed to execute query: {:?}", e);

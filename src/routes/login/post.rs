@@ -11,8 +11,9 @@ use secrecy::Secret;
 use sqlx::PgPool;
 
 #[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct FormData {
-    username: String,
+    full_name: String,
     password: Secret<String>,
 }
 
@@ -22,12 +23,12 @@ pub struct FormData {
 )]
 // We are now injecting `PgPool` to retrieve stored credentials from the database
 pub async fn login(
-    form: web::Form<FormData>,
+    form: web::Json<FormData>,
     pool: web::Data<PgPool>,
     session: TypedSession,
 ) -> Result<HttpResponse, InternalError<LoginError>> {
     let credentials = Credentials {
-        username: form.0.username,
+        username: form.0.full_name,
         password: form.0.password,
     };
     tracing::Span::current().record("username", &tracing::field::display(&credentials.username));

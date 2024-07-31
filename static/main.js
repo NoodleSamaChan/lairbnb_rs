@@ -27,7 +27,7 @@ async function open_popup(marker) {
   let id = marker.announce_id;
 
   // Second get the document associated with the id with all its content.
-  let result = await fetch(`http://127.0.0.1:5000/lair/${id}`, {
+  let result = await fetch(`http://127.0.0.1:8000/lair/${id}`, {
     method: "GET"
   });
   let lair = await result.json();
@@ -65,7 +65,7 @@ async function refresh_announce(bounds) {
   let br_lat = bounds._southWest.lat;
   let br_lng = bounds._northEast.lng;
 
-  let query = `http://127.0.0.1:5000/lair?tl_lat=${tl_lat}&tl_lng=${tl_lng}&br_lat=${br_lat}&br_lng=${br_lng}`;
+  let query = `http://127.0.0.1:8000/lair?tl_lat=${tl_lat}&tl_lng=${tl_lng}&br_lat=${br_lat}&br_lng=${br_lng}`;
   if (searchbar.value != "") {
     let search = searchbar.value;
     query += `&search=${search}`;
@@ -180,7 +180,7 @@ async function insertDocument() {
   console.log("Sending payload", payload); 
   console.log(cookie);
    
-  let response = await fetch("http://127.0.0.1:5000/lair", {
+  let response = await fetch("http://127.0.0.1:8000/lair", {
     method: "POST",
     body: JSON.stringify(payload),
     headers: {
@@ -211,7 +211,7 @@ async function create_Account() {
     let passwordValue = document.getElementById("password").value;
 
     // Send form info to SQL table for new users.
-    let creationAccount = await fetch(`http://127.0.0.1:5000/user`, {
+    let creationAccount = await fetch(`http://127.0.0.1:8000/user`, {
       method: "POST",
       body: JSON.stringify({fullName : fullNameValue, password : passwordValue}),
       headers: {
@@ -229,7 +229,7 @@ async function login_account() {
   let passwordValue = document.getElementById("password").value
 
     // Send form info to SQL table for login.
-    let login_account = await fetch(`http://127.0.0.1:5000/user/login`, {
+    let login_account = await fetch(`http://127.0.0.1:8000/user/login`, {
       method: "POST",
       body: JSON.stringify({fullName : fullNameValue, password : passwordValue}),
       headers: {
