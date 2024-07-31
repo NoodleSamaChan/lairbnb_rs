@@ -1,16 +1,17 @@
+use crate::domain::{NewSubscriber, SubscriberEmail, SubscriberName, SubscriberPassword};
+use crate::utils::see_other;
 use actix_web::{web, HttpResponse, ResponseError};
+use actix_web_flash_messages::FlashMessage;
 use anyhow::Context;
 use reqwest::StatusCode;
 use serde::Deserialize;
 use sqlx::{Executor, PgPool, Postgres, Transaction};
 use uuid::Uuid;
 
-use crate::domain::{NewSubscriber, SubscriberEmail, SubscriberName, SubscriberPassword};
-
 #[derive(Deserialize)]
 pub struct FormData {
-    email: String,
     name: String,
+    email: String,
     password: String,
 }
 impl TryFrom<FormData> for NewSubscriber {
@@ -42,15 +43,6 @@ impl std::fmt::Debug for SubscribeError {
     }
 }
 
-impl ResponseError for SubscribeError {
-    fn status_code(&self) -> StatusCode {
-        match self {
-            SubscribeError::ValidationError(_) => StatusCode::BAD_REQUEST,
-            SubscribeError::UnexpectedError(_) => StatusCode::INTERNAL_SERVER_ERROR,
-        }
-    }
-}
-
 pub fn error_chain_fmt(
     e: &impl std::error::Error,
     f: &mut std::fmt::Formatter<'_>,
@@ -62,6 +54,15 @@ pub fn error_chain_fmt(
         current = cause.source();
     }
     Ok(())
+}
+
+impl ResponseError for SubscribeError {
+    fn status_code(&self) -> StatusCode {
+        match self {
+            SubscribeError::ValidationError(_) => StatusCode::BAD_REQUEST,
+            SubscribeError::UnexpectedError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+        }
+    }
 }
 
 #[allow(clippy::async_yields_async)]
@@ -78,19 +79,25 @@ pub async fn register(
     form: web::Form<FormData>,
     pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, SubscribeError> {
-    let new_subscriber = form.0.try_into().map_err(SubscribeError::ValidationError)?;
+    println!("TRYING TO CREATE NEW USER");
+    let new_subscriber = NewSubscriber {
+        email: SubscriberEmail::parse(form.0.email).expect("Email check failed"),
+        name: SubscriberName::parse(form.0.name).expect("Name check failed"),
+        password: SubscriberPassword::parse(form.0.password).expect("Password check failed"),
+    };
     let mut transaction = pool
         .begin()
         .await
         .context("Failed to acquire a Postgres connection from the pool")?;
-    let subscriber_id = insert_user(&new_subscriber, &mut transaction)
+    let _subscriber_id = insert_user(&new_subscriber, &mut transaction)
         .await
         .context("Failed to insert new subscriber in the database.")?;
     transaction
         .commit()
         .await
         .context("Failed to commit SQL transaction to store a new subscriber.")?;
-    Ok(HttpResponse::Ok().finish())
+    FlashMessage::error("Your account has been created.").send();
+    Ok(see_other("/login"))
 }
 
 #[tracing::instrument(
@@ -116,5 +123,6 @@ pub async fn insert_user(
         tracing::error!("Failed to execute query: {:?}", e);
         e
     })?;
+    println!("I TRIED TO PUT DATA INTO MY DB");
     Ok(subscriber_id)
 }

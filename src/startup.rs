@@ -1,4 +1,8 @@
-use crate::routes::{admin_dashboard, health_check, home, insert_lair, login, login_form, register};
+use crate::authentication::reject_anonymous_users;
+use crate::routes::{
+    admin_dashboard, change_password, change_password_form, health_check, home, insert_lair,
+    insert_lair_form, log_out, login, login_form, register, sign_up_form,
+};
 use crate::{
     configuration::{DatabaseSettings, Settings},
     email_client::EmailClient,
@@ -13,6 +17,7 @@ use actix_web::{
 };
 use actix_web_flash_messages::storage::CookieMessageStore;
 use actix_web_flash_messages::FlashMessagesFramework;
+use actix_web_lab::middleware::from_fn;
 use secrecy::{ExposeSecret, Secret};
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use std::net::TcpListener;
@@ -51,7 +56,8 @@ impl Application {
             configuration.application.base_url,
             configuration.application.hmac_secret,
             configuration.redis_uri,
-        ).await?;
+        )
+        .await?;
 
         Ok(Self { port, server })
     }
@@ -71,7 +77,7 @@ pub fn get_connection_pool(configuration: &DatabaseSettings) -> PgPool {
 
 pub struct ApplicationBaseUrl(pub String);
 
-async  fn run(
+async fn run(
     listener: TcpListener,
     db_pool: PgPool,
     email_client: EmailClient,
@@ -95,12 +101,21 @@ async  fn run(
             ))
             .wrap(TracingLogger::default())
             .route("/health_check", web::get().to(health_check))
+            .route("/registration", web::get().to(sign_up_form))
             .route("/registration", web::post().to(register))
-            .route("/new_lair", web::post().to(insert_lair))
             .route("/", web::get().to(home))
             .route("/login", web::get().to(login_form))
             .route("/login", web::post().to(login))
-            .route("/admin/dashboard", web::get().to(admin_dashboard))
+            .service(
+                web::scope("/admin")
+                    .wrap(from_fn(reject_anonymous_users))
+                    .route("/dashboard", web::get().to(admin_dashboard))
+                    .route("/password", web::get().to(change_password_form))
+                    .route("/password", web::post().to(change_password))
+                    .route("/logout", web::post().to(log_out))
+                    .route("/dashboard/insert_lair", web::get().to(insert_lair_form))
+                    .route("/dashboard/insert_lair", web::post().to(insert_lair)),
+            )
             .app_data(db_pool.clone())
             .app_data(email_client.clone())
             .app_data(base_url.clone())
