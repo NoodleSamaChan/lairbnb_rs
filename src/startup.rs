@@ -1,4 +1,5 @@
 use crate::authentication::reject_anonymous_users;
+use crate::get_documents_from_id::{deleting_lair, looking_at_lair};
 use crate::routes::{
     admin_dashboard, change_password, change_password_form, health_check, home, insert_lair,
     insert_lair_form, log_out, login, login_form, register, sign_up_form,
@@ -7,6 +8,7 @@ use crate::{
     configuration::{DatabaseSettings, Settings},
     email_client::EmailClient,
 };
+use actix_cors::Cors;
 use actix_session::storage::RedisSessionStore;
 use actix_session::SessionMiddleware;
 use actix_web::cookie::Key;
@@ -95,6 +97,12 @@ async fn run(
     let redis_store = RedisSessionStore::new(redis_uri.expose_secret()).await?;
     let server = HttpServer::new(move || {
         App::new()
+        .wrap(Cors::default()
+            .send_wildcard()
+            .allow_any_header()
+            .allow_any_origin()
+            .allow_any_method()
+            .max_age(86_400),)
             .wrap(message_framework.clone())
             .wrap(SessionMiddleware::new(
                 redis_store.clone(),
@@ -102,12 +110,17 @@ async fn run(
             ))
             .wrap(TracingLogger::default())
             .service(fs::Files::new("/static", "static").show_files_listing())
-            .route("/health_check", web::get().to(health_check))
-            .route("/registration", web::get().to(sign_up_form))
+            /*.route("/health_check", web::get().to(health_check))
+            .route("/registration", web::get().to(sign_up_form)) */
             .route("/user", web::post().to(register))
-            .route("/", web::get().to(home))
+            .route("/user/login", web::post().to(login))
+            .route("/lair", web::post().to(insert_lair))
+            .service(web::resource("/lair/{id}").route(web::get().to(looking_at_lair)))
+            .service(web::resource("/lair/{id}").route(web::delete().to(deleting_lair)))
+            .service(web::resource("/lair/").route(web::post().to(insert_lair)))
+            /*.route("/", web::get().to(home))
             .route("/login", web::get().to(login_form))
-            .route("/login", web::post().to(login))
+            .route("/login", web::post().to(login)) */ 
             .service(
                 web::scope("/admin")
                     .wrap(from_fn(reject_anonymous_users))

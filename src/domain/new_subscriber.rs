@@ -4,7 +4,7 @@ use crate::domain::{
 };
 
 pub struct NewSubscriber {
-    //pub email: SubscriberEmail,
+    pub email: SubscriberEmail,
     pub name: SubscriberName,
     pub password: SubscriberPassword,
 }

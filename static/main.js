@@ -208,12 +208,13 @@ function closeForm() {
 
 async function create_Account() {
     let fullNameValue = document.getElementById("fname").value;
+    let emailValue = document.getElementById("email").value;
     let passwordValue = document.getElementById("password").value;
 
     // Send form info to SQL table for new users.
     let creationAccount = await fetch(`http://127.0.0.1:8000/user`, {
       method: "POST",
-      body: JSON.stringify({fullName : fullNameValue, password : passwordValue}),
+      body: JSON.stringify({fullName : fullNameValue, email : emailValue, password : passwordValue}),
       headers: {
         "Content-Type": "application/json",
       }
