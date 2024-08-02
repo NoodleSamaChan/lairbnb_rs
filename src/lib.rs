@@ -1,12 +1,12 @@
 pub mod authentication;
 pub mod configuration;
+pub mod create_cookie;
 pub mod domain;
 pub mod email_client;
+pub mod get_documents_from_id;
+pub mod lairs_on_map;
 pub mod routes;
 pub mod session_state;
 pub mod startup;
 pub mod telemetry;
 pub mod utils;
-pub mod get_documents_from_id;
-pub mod lairs_on_map;
-pub mod create_cookie;

@@ -66,14 +66,10 @@ impl ResponseError for SubscribeError {
         subscriber_password = %form.password,
     )
 )]
-pub async fn 
-register(
+pub async fn register(
     form: web::Json<FormData>,
     pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, SubscribeError> {
-
-    
-
     let new_subscriber = NewSubscriber {
         name: SubscriberName::parse(form.0.full_name).expect("Name check failed"),
         email: SubscriberEmail::parse(form.0.email).expect("Email check failed"),

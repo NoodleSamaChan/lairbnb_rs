@@ -1,5 +1,6 @@
 use crate::authentication::reject_anonymous_users;
 use crate::get_documents_from_id::{deleting_lair, looking_at_lair};
+use crate::lairs_on_map::lairs_based_on_coordinates;
 use crate::routes::{
     admin_dashboard, change_password, change_password_form, health_check, home, insert_lair,
     insert_lair_form, log_out, login, login_form, register, sign_up_form,
@@ -9,6 +10,7 @@ use crate::{
     email_client::EmailClient,
 };
 use actix_cors::Cors;
+use actix_files as fs;
 use actix_session::storage::RedisSessionStore;
 use actix_session::SessionMiddleware;
 use actix_web::cookie::Key;
@@ -24,7 +26,6 @@ use secrecy::{ExposeSecret, Secret};
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use std::net::TcpListener;
 use tracing_actix_web::TracingLogger;
-use actix_files as fs;
 
 pub struct Application {
     port: u16,
@@ -97,12 +98,14 @@ async fn run(
     let redis_store = RedisSessionStore::new(redis_uri.expose_secret()).await?;
     let server = HttpServer::new(move || {
         App::new()
-        .wrap(Cors::default()
-            .send_wildcard()
-            .allow_any_header()
-            .allow_any_origin()
-            .allow_any_method()
-            .max_age(86_400),)
+            .wrap(
+                Cors::default()
+                    .send_wildcard()
+                    .allow_any_header()
+                    .allow_any_origin()
+                    .allow_any_method()
+                    .max_age(86_400),
+            )
             .wrap(message_framework.clone())
             .wrap(SessionMiddleware::new(
                 redis_store.clone(),
@@ -110,18 +113,13 @@ async fn run(
             ))
             .wrap(TracingLogger::default())
             .service(fs::Files::new("/static", "static").show_files_listing())
-            /*.route("/health_check", web::get().to(health_check))
-            .route("/registration", web::get().to(sign_up_form)) */
             .route("/user", web::post().to(register))
             .route("/user/login", web::post().to(login))
             .route("/lair", web::post().to(insert_lair))
             .service(web::resource("/lair/{id}").route(web::get().to(looking_at_lair)))
             .service(web::resource("/lair/{id}").route(web::delete().to(deleting_lair)))
-            .service(web::resource("/lair/").route(web::post().to(insert_lair)))
-            /*.route("/", web::get().to(home))
-            .route("/login", web::get().to(login_form))
-            .route("/login", web::post().to(login)) */ 
-            .service(
+            .service(web::resource("/lair").route(web::get().to(lairs_based_on_coordinates)))
+            /*.service(
                 web::scope("/admin")
                     .wrap(from_fn(reject_anonymous_users))
                     .route("/dashboard", web::get().to(admin_dashboard))
@@ -130,7 +128,7 @@ async fn run(
                     .route("/logout", web::post().to(log_out))
                     .route("/dashboard/insert_lair", web::get().to(insert_lair_form))
                     .route("/dashboard/insert_lair", web::post().to(insert_lair)),
-            )
+            )*/
             .app_data(db_pool.clone())
             .app_data(email_client.clone())
             .app_data(base_url.clone())

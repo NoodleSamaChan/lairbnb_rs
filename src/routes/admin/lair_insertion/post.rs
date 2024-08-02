@@ -1,5 +1,8 @@
 use crate::{
-    authentication::UserId, create_cookie::{extract_cookie, UserInfo}, routes::admin::{dashboard::get_username, password}, utils::{e500, see_other}
+    authentication::UserId,
+    create_cookie::{extract_cookie, UserInfo},
+    routes::admin::{dashboard::get_username, password},
+    utils::{e500, see_other},
 };
 use actix_web::{web, HttpRequest, HttpResponse, ResponseError};
 use actix_web_flash_messages::FlashMessage;
@@ -20,7 +23,7 @@ pub struct LairInfo {
 }
 
 #[tracing::instrument(
-    name = "Saving new subscriber details in the database",
+    name = "Saving new lair details in the database",
     skip(pool, lair_info)
 )]
 pub async fn insert_lair(
@@ -40,13 +43,17 @@ pub async fn insert_lair(
 
     insert_lair_into_db(lair_info, &mut transaction, account_id, room_id)
         .await
-        .context("Failed to store newsletter issue details")?;
+        .context("Failed to store lair issue details")?;
+    transaction
+        .commit()
+        .await
+        .context("Failed to commit SQL transaction to store a new lair.")?;
     FlashMessage::info("You've added the lair successfully!").send();
     Ok(HttpResponse::Ok().json(json!({"status":"success"})))
 }
 
 #[tracing::instrument(
-    name = "Saving new subscriber details in the database",
+    name = "Saving new lair details in the database",
     skip(lair_info, transaction, user_id, room_id)
 )]
 pub async fn insert_lair_into_db(
@@ -57,7 +64,7 @@ pub async fn insert_lair_into_db(
 ) -> Result<HttpResponse, sqlx::Error> {
     let query = sqlx::query!(
         r#"
-    INSERT INTO rooms (id, title, image, description, lon, lat, room_id)
+    INSERT INTO rooms (account_id, title, image, description, lon, lat, room_id)
     VALUES ($1, $2, $3, $4, $5, $6, $7)
             "#,
         user_id,
@@ -72,10 +79,7 @@ pub async fn insert_lair_into_db(
     Ok(HttpResponse::Ok().finish())
 }
 
-#[tracing::instrument(
-    name = "Gatting account id",
-    skip(account_information, pool)
-)]
+#[tracing::instrument(name = "Gatting account id", skip(account_information, pool))]
 pub async fn get_account_info(
     account_information: UserInfo,
     pool: &web::Data<PgPool>,
@@ -89,12 +93,12 @@ pub async fn get_account_info(
             "#,
         name,
         password,
-    ).fetch_one(&*pool.clone().into_inner())
+    )
+    .fetch_one(&*pool.clone().into_inner())
     .await
     .context("Failed to perform a query to retrieve a username.")?;
     Ok(query.id)
 }
-
 
 #[derive(thiserror::Error)]
 pub enum InsertError {
