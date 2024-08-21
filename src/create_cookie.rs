@@ -1,14 +1,8 @@
-use crate::{
-    authentication::Credentials,
-    domain::{SubscriberName, SubscriberPassword},
-};
-use actix_web::{http::Error, web, HttpRequest, HttpResponse};
+use crate::
+    domain::{SubscriberName, SubscriberPassword};
+use actix_web::HttpRequest;
 use base64::{engine::general_purpose::URL_SAFE, Engine};
-use reqwest::{cookie, StatusCode};
-use secrecy::{ExposeSecret, Secret};
 use serde::Deserialize;
-use sqlx::PgPool;
-
 pub fn create_cookie(username: &SubscriberName, password: &SubscriberPassword) -> String {
     let secret = String::from("airbnb");
 

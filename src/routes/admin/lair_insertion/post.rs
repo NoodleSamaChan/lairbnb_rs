@@ -1,7 +1,6 @@
 use crate::{
-    authentication::UserId,
     create_cookie::{extract_cookie, UserInfo},
-    routes::admin::{dashboard::get_username, password},
+    routes::admin::{dashboard::get_username},
     utils::{e500, see_other},
 };
 use actix_web::{web, HttpRequest, HttpResponse, ResponseError};

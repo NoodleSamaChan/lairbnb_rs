@@ -1,4 +1,4 @@
-use crate::{authentication::UserId, routes::error_chain_fmt};
+use crate:: routes::error_chain_fmt;
 use actix_web::{web, HttpResponse, ResponseError};
 use anyhow::Context;
 use reqwest::StatusCode;

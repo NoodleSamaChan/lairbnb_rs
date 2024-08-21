@@ -1,10 +1,8 @@
 use crate::{
-    authentication::UserId,
     create_cookie::{extract_cookie, UserInfo},
-    routes::{error_chain_fmt, get_account_info, get_username},
-    utils::{e500, see_other},
+    routes::error_chain_fmt,
 };
-use actix_web::{delete, get, post, web, HttpRequest, HttpResponse, ResponseError};
+use actix_web::{web, HttpRequest, HttpResponse, ResponseError};
 use actix_web_flash_messages::FlashMessage;
 use anyhow::Context;
 use reqwest::StatusCode;

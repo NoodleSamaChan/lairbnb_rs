@@ -1,8 +1,7 @@
-use crate::authentication::reject_anonymous_users;
 use crate::get_documents_from_id::{deleting_lair, looking_at_lair};
 use crate::lairs_on_map::lairs_based_on_coordinates;
 use crate::routes::{
-    admin_dashboard, change_password, change_password_form, health_check, home, insert_lair,
+    admin_dashboard, health_check, home, insert_lair,
     insert_lair_form, log_out, login, login_form, register, sign_up_form,
 };
 use crate::{
@@ -119,16 +118,6 @@ async fn run(
             .service(web::resource("/lair/{id}").route(web::get().to(looking_at_lair)))
             .service(web::resource("/lair/{id}").route(web::delete().to(deleting_lair)))
             .service(web::resource("/lair").route(web::get().to(lairs_based_on_coordinates)))
-            /*.service(
-                web::scope("/admin")
-                    .wrap(from_fn(reject_anonymous_users))
-                    .route("/dashboard", web::get().to(admin_dashboard))
-                    .route("/password", web::get().to(change_password_form))
-                    .route("/password", web::post().to(change_password))
-                    .route("/logout", web::post().to(log_out))
-                    .route("/dashboard/insert_lair", web::get().to(insert_lair_form))
-                    .route("/dashboard/insert_lair", web::post().to(insert_lair)),
-            )*/
             .app_data(db_pool.clone())
             .app_data(email_client.clone())
             .app_data(base_url.clone())

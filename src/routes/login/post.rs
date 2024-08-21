@@ -1,7 +1,6 @@
 use crate::create_cookie::create_cookie;
 use crate::domain::{SubscriberName, SubscriberPassword};
 use crate::routes::error_chain_fmt;
-use crate::session_state::TypedSession;
 use actix_web::http::header::LOCATION;
 use actix_web::HttpResponse;
 use actix_web::{web, ResponseError};
@@ -21,14 +20,13 @@ pub struct FormData {
 }
 
 #[tracing::instrument(
-    skip(form, pool, session),
+    skip(form, pool),
     fields(username=tracing::field::Empty, user_id=tracing::field::Empty)
 )]
 // We are now injecting `PgPool` to retrieve stored credentials from the database
 pub async fn login(
     form: web::Json<FormData>,
     pool: web::Data<PgPool>,
-    session: TypedSession,
 ) -> Result<HttpResponse, FetchError> {
     let credentials_check = check_user_exists(&form, pool).await?;
 

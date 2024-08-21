@@ -1,4 +1,3 @@
-pub mod authentication;
 pub mod configuration;
 pub mod create_cookie;
 pub mod domain;
